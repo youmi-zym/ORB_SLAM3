@@ -181,7 +181,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
     mpLocalMapper->mInitFr = initFr;
     mpLocalMapper->mThFarPoints = fsSettings["thFarPoints"];
-    if(mpLocalMapper->mThFarPoints!=0)
+    if(mpLocalMapper->mThFarPoints > 1e-5)
     {
         cout << "Discard points further than " << mpLocalMapper->mThFarPoints << " m from current camera" << endl;
         mpLocalMapper->mbFarPoints = true;
@@ -859,6 +859,16 @@ int System::GetTrackingState()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackingState;
+}
+
+vector<KeyFrame*> System::GetKeyFrames() const
+{
+    return mpMap->GetAllKeyFrames();
+}
+
+Tracking* System::GetTracker() const
+{
+    return mpTracker;
 }
 
 vector<MapPoint*> System::GetTrackedMapPoints()

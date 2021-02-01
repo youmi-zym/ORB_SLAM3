@@ -33,7 +33,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 3)
+find_package(OpenCV 3.4.3 QUIET)
 if(NOT OpenCV_FOUND)
    find_package(OpenCV 2.4.3 QUIET)
    if(NOT OpenCV_FOUND)
@@ -191,4 +191,33 @@ add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
 
+# ---------------
+# Installation instructions.
+# Will install to CMAKE_INSTALL_PREFIX
+# This defaults to /usr/local/, specify -DCMAKE_INSTALL_PREFIX when calling cmake to specify an alternate location
+# e.g. cmake -DCMAKE_INSTALL_PREFIX="~/local"
+# ---------------
+
+install(TARGETS ${PROJECT_NAME}
+    DESTINATION  lib
+    COMPONENT library)
+install(FILES
+        ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+        ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+    DESTINATION lib
+    COMPONENT library)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+    DESTINATION include/ORB_SLAM3
+    COMPONENT library
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN "Thirdparty" EXCLUDE)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/CameraModels
+    DESTINATION include/ORB_SLAM3
+    COMPONENT library
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN "Thirdparty" EXCLUDE)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/
+    DESTINATION include/ORB_SLAM3/Thirdparty
+    COMPONENT library
+FILES_MATCHING REGEX ".*\\.h(pp)?")
 
