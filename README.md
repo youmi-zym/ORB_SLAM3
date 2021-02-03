@@ -1,5 +1,11 @@
 # ORB-SLAM3
 
+### V0.4 SelfModified Feb 2021
+1. Add make install
+2. Add #include <unistd.h> to support Xavier
+3. modify build.sh for install convenience
+4. Fix some bugs according to PullRequest
+
 ### V0.3: Beta version, 4 Sep 2020
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
@@ -87,7 +93,8 @@ We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM
 ```
 cd ORB_SLAM3
 chmod +x build.sh
-./build.sh
+# COMPILEWHICH can be 0(for All), 1(for Thirdparty Only), 2(for ORB_SLAM3 Only)
+./build.sh $(COMPILE_WHICH)
 ```
 
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.

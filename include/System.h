@@ -39,6 +39,7 @@
 #include "ORBVocabulary.h"
 #include "Viewer.h"
 #include "ImuTypes.h"
+#include "Map.h"
 
 
 namespace ORB_SLAM3
@@ -77,6 +78,7 @@ class Atlas;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class Map;
 
 class System
 {
@@ -207,6 +209,7 @@ private:
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;
+    Map* mpMap;
 
     // Loop Closer. It searches loops with every new keyframe. If there is a loop it performs
     // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.

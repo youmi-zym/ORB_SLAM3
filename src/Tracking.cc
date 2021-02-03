@@ -3240,7 +3240,6 @@ bool Tracking::Relocalization()
         vpMLPnPsolvers[i] = pSolver;
         ++nCandidates;
 
-        }
     }
 
     // Alternatively perform some iterations of P4P RANSAC
