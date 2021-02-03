@@ -789,24 +789,31 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
 {
     bool b_miss_params = false;
 
-    cv::Mat Tbc;
-    cv::FileNode node = fSettings["Tbc"];
-    if(!node.empty())
-    {
-        Tbc = node.mat();
-        if(Tbc.rows != 4 || Tbc.cols != 4)
+    cv::FileNode node;
+    /*
+    try:
+        cv::FileNode node = fSettings["Tbc"];
+        if(!node.empty())
         {
-            std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
+            Tbc = node.mat();
+            if(Tbc.rows != 4 || Tbc.cols != 4)
+            {
+                std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
+                b_miss_params = true;
+            }
+        }
+        else
+        {
+            std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
             b_miss_params = true;
         }
-    }
-    else
-    {
-        std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
-        b_miss_params = true;
-    }
+    */
 
-    cout << endl;
+    cv::Mat Tbc = (cv::Mat_<float>(4,4) << \
+           0.99997700, 0.006432690, -0.002351350, -0.00200000009499, \
+          -0.00643046, 0.999979000,  0.000953118, -0.02300000377,    \
+           0.00235743, -0.000937976, 0.999997000, -0.00200000009499, \
+           0.0, 0.0, 0.0, 1.0);
 
     cout << "Left camera to Imu Transform (Tbc): " << endl << Tbc << endl;
 
