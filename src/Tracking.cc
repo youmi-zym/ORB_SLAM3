@@ -1160,12 +1160,18 @@ void Tracking::PreintegrateIMU()
             }
             else
             {
-                break;
+                cout << "IMU no data yet!" << endl;
+                break; // TODO to be del
                 bSleep = true;
+                cout << "IMU will go to sleep!" << endl;
             }
         }
         if(bSleep)
+        {
             usleep(500);
+            cout << "IMU has slept for 500ms!" << endl;
+
+        }
     }
 
 

@@ -1,4 +1,5 @@
 echo "Configuring and building Thirdparty/DBoW2 ..."
+NUM_CPU=$(nproc)
 
 cd Thirdparty/DBoW2
 mkdir build
