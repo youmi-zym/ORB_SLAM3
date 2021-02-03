@@ -25,6 +25,7 @@
 
 #include<thread>
 #include <include/CameraModels/Pinhole.h>
+#include <unistd.h>
 
 namespace ORB_SLAM3
 {

@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include<opencv2/core/core.hpp>
+#include <unistd.h>
 
 #include<System.h>
 #include "ImuTypes.h"

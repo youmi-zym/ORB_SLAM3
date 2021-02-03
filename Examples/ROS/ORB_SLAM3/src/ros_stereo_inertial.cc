@@ -30,6 +30,7 @@
 #include<sensor_msgs/Imu.h>
 
 #include<opencv2/core/core.hpp>
+#include <unistd.h>
 
 #include"../../../include/System.h"
 #include"../include/ImuTypes.h"

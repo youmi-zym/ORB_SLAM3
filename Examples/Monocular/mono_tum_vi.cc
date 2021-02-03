@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include<opencv2/core/core.hpp>
+#include <unistd.h>
 
 #include"System.h"
 #include "Converter.h"

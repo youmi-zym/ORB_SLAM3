@@ -23,6 +23,7 @@
 #include<iomanip>
 
 #include<opencv2/core/core.hpp>
+#include <unistd.h>
 
 #include"System.h"
 

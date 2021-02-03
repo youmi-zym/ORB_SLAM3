@@ -25,6 +25,7 @@
 
 #include<mutex>
 #include<chrono>
+#include <unistd.h>
 
 namespace ORB_SLAM3
 {

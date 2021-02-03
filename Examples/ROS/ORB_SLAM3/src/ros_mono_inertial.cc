@@ -24,6 +24,7 @@
 #include<queue>
 #include<thread>
 #include<mutex>
+#include <unistd.h>
 
 #include<ros/ros.h>
 #include<cv_bridge/cv_bridge.h>

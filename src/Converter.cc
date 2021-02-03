@@ -17,6 +17,7 @@
 */
 
 #include "Converter.h"
+#include <unistd.h>
 
 namespace ORB_SLAM3
 {

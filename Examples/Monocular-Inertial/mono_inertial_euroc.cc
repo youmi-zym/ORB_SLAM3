@@ -23,6 +23,7 @@
 #include<chrono>
 #include <ctime>
 #include <sstream>
+#include <unistd.h>
 
 #include<opencv2/core/core.hpp>
 
