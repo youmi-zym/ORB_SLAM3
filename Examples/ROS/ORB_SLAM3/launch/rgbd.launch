@@ -17,7 +17,7 @@
 
     <node unless="$(arg imu)" name="RGBD" pkg="ORB_SLAM3" type="RGBD" output="screen" args="$(arg args)" launch-prefix="">
         <remap from="/camera/left/image_raw"        to="$(arg left_camera_topic)" />
-        <remap from="/camera/depth/image_raw"       to="$(arg depth_camera_topic)" />
+        <remap from="/camera/depth_registered/image_raw"       to="$(arg depth_camera_topic)" />
     </node>
 
 
