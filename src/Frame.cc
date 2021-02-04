@@ -255,6 +255,19 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     mb = mbf/fx;
 
+    if(pPrevF)
+    {
+        if(!pPrevF->mVw.empty())
+            mVw = pPrevF->mVw.clone();
+    }
+    else
+    {
+        mVw = cv::Mat::zeros(3,1,CV_32F);
+    }
+
+    AssignFeaturesToGrid();
+
+
     mpMutexImu = new std::mutex();
 
     //Set no stereo fisheye information
@@ -267,8 +280,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     mvStereo3Dpoints = vector<cv::Mat>(0);
     monoLeft = -1;
     monoRight = -1;
-
-    AssignFeaturesToGrid();
 }
 
 

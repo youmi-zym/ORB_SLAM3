@@ -5,8 +5,8 @@
 2. Add #include <unistd.h> to support Xavier
 3. modify build.sh for install convenience
 4. Fix some bugs according to PullRequest
+5. Add RGBD-Inertial-ROS by adopting from [xiefei2929/ORB_SLAM3-RGBD-Inertial](https://github.com/xiefei2929/ORB_SLAM3-RGBD-Inertial)
 
-### V0.3: Beta version, 4 Sep 2020
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
 The [Changelog](https://github.com/UZ-SLAMLab/ORB_SLAM3/Changelog.md) describes the features of each version.
