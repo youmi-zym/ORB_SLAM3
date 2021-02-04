@@ -1,0 +1,24 @@
+<launch>
+    <arg name="imu"                 default="true"/>
+    <arg name="imu_topic"           default="/zed2/zed_node/imu/data"/>
+    <arg name="left_camera_topic"   default="/zed2/zed_node/left/image_rect_color"/>
+    <arg name="depth_camera_topic"  default="/zed2/zed_node/depth/depth_registered"/>
+    <arg name="args"                default=""/>
+
+    <!--  for DEBUG
+    <node if="$(arg imu)" name="RGBD_Inertial" pkg="ORB_SLAM3" type="RGBD_Inertial" output="screen" args="$(arg args)" launch-prefix="xterm -e gdb -ex run args">
+    -->
+
+    <node if="$(arg imu)" name="RGBD_Inertial" pkg="ORB_SLAM3" type="RGBD_Inertial" output="screen" args="$(arg args)" launch-prefix="">
+        <remap from="/imu"                          to="$(arg imu_topic)" />
+        <remap from="/camera/left/image_raw"        to="$(arg left_camera_topic)" />
+        <remap from="/camera/depth/image_raw"       to="$(arg depth_camera_topic)" />
+    </node>
+
+    <node unless="$(arg imu)" name="RGBD" pkg="ORB_SLAM3" type="RGBD" output="screen" args="$(arg args)" launch-prefix="">
+        <remap from="/camera/left/image_raw"        to="$(arg left_camera_topic)" />
+        <remap from="/camera/depth/image_raw"       to="$(arg depth_camera_topic)" />
+    </node>
+
+
+</launch>

@@ -36,7 +36,6 @@
 
 using namespace std;
 
-float shift = 0;
 
 class ImuGrabber
 {
