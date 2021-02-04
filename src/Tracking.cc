@@ -963,6 +963,8 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     mCurrentFrame.mNameFile = filename;
     mCurrentFrame.mnDataset = mnNumDataset;
 
+    std::cout << "Start Tracking ... " << endl;
+
     Track();
 
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -1021,6 +1023,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     mCurrentFrame.mNameFile = filename;
     mCurrentFrame.mnDataset = mnNumDataset;
 
+    std::cout << "Start Tracking ... " << endl;
 
     Track();
 
@@ -1092,6 +1095,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
     mCurrentFrame.mnDataset = mnNumDataset;
 
     lastID = mCurrentFrame.mnId;
+
+    std::cout << "Start Tracking ... " << endl;
+
     Track();
 
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -1922,13 +1928,13 @@ void Tracking::StereoInitialization()
         {
             if (!mCurrentFrame.mpImuPreintegrated || !mLastFrame.mpImuPreintegrated)
             {
-                cout << "not IMU meas" << endl;
+                cout << "not IMU meas: StereoInitialization" << endl;
                 return;
             }
 
             if (cv::norm(mCurrentFrame.mpImuPreintegratedFrame->avgA-mLastFrame.mpImuPreintegratedFrame->avgA)<0.5)
             {
-                cout << "not enough acceleration" << endl;
+                cout << "not enough acceleration: StereoInitialization" << endl;
                 return;
             }
 

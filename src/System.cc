@@ -290,9 +290,9 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
 
 cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
-    if(mSensor!=RGBD || mSensor!=IMU_RGBD)
+    if(mSensor!=RGBD && mSensor!=IMU_RGBD)
     {
-        cerr << "ERROR: you called TrackRGBD but input sensor was " << mSensor << " not set to RGBD nor RGBD-Inertial." << endl;
+        cerr << "ERROR: you called TrackRGBD but input sensor was " << mSensor << " not set to RGBD: " << RGBD << " nor RGBD-Inertial: " << IMU_RGBD << "." << endl;
         exit(-1);
     }    
 
@@ -336,7 +336,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         }
     }
 
-    if(mSensor == System::IMU_RGBD)
+    if(mSensor == IMU_RGBD)
         for(size_t i_imu=0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
