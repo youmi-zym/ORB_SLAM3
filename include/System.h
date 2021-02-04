@@ -78,7 +78,6 @@ class Atlas;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
-class Map;
 
 class System
 {

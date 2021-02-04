@@ -226,7 +226,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
-        cerr << "ERROR: you called TrackStereo but input sensor was not set to Stereo nor Stereo-Inertial." << endl;
+        cerr << "ERROR: you called TrackStereo but input sensor was " << mSensor << " not set to Stereo nor Stereo-Inertial." << endl;
         exit(-1);
     }   
 
@@ -292,7 +292,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 {
     if(mSensor!=RGBD || mSensor!=IMU_RGBD)
     {
-        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD nor RGBD-Inertial." << endl;
+        cerr << "ERROR: you called TrackRGBD but input sensor was " << mSensor << " not set to RGBD nor RGBD-Inertial." << endl;
         exit(-1);
     }    
 
@@ -354,7 +354,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
 {
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
     {
-        cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
+        cerr << "ERROR: you called TrackMonocular but input sensor was " << mSensor << " not set to Monocular nor Monocular-Inertial." << endl;
         exit(-1);
     }
 
@@ -479,7 +479,7 @@ void System::Shutdown()
     }
 
     if(mpViewer)
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+        pangolin::BindToContext("ORB-SLAM3: Map Viewer");
 }
 
 
@@ -870,7 +870,7 @@ int System::GetTrackingState()
 
 vector<KeyFrame*> System::GetKeyFrames() const
 {
-    return mpMap->GetAllKeyFrames();
+    return mpAtlas->GetAllKeyFrames();
 }
 
 Tracking* System::GetTracker() const
