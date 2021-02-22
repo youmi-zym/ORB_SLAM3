@@ -87,52 +87,6 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
 
     mbInitWith3KFs = false;
 
-
-    //Rectification parameters
-    /*mbNeedRectify = false;
-    if((mSensor == System::STEREO || mSensor == System::IMU_STEREO) && sCameraName == "PinHole")
-    {
-        cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-        fSettings["LEFT.K"] >> K_l;
-        fSettings["RIGHT.K"] >> K_r;
-
-        fSettings["LEFT.P"] >> P_l;
-        fSettings["RIGHT.P"] >> P_r;
-
-        fSettings["LEFT.R"] >> R_l;
-        fSettings["RIGHT.R"] >> R_r;
-
-        fSettings["LEFT.D"] >> D_l;
-        fSettings["RIGHT.D"] >> D_r;
-
-        int rows_l = fSettings["LEFT.height"];
-        int cols_l = fSettings["LEFT.width"];
-        int rows_r = fSettings["RIGHT.height"];
-        int cols_r = fSettings["RIGHT.width"];
-
-        if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty()
-                || rows_l==0 || cols_l==0 || rows_r==0 || cols_r==0)
-        {
-            mbNeedRectify = false;
-        }
-        else
-        {
-            mbNeedRectify = true;
-            // M1r y M2r son los outputs (igual para l)
-            // M1r y M2r son las matrices relativas al mapeo correspondiente a la rectificación de mapa en el eje X e Y respectivamente
-            //cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-            //cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
-        }
-
-
-    }
-    else
-    {
-        int cols = 752;
-        int rows = 480;
-        cv::Mat R_l = cv::Mat::eye(3, 3, CV_32F);
-    }*/
-
     mnNumDataset = 0;
 
     if(!b_parse_cam || !b_parse_orb || !b_parse_imu)
@@ -788,32 +742,37 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
 bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
 {
     bool b_miss_params = false;
-
     cv::FileNode node;
-    /*
-    try:
-        cv::FileNode node = fSettings["Tbc"];
-        if(!node.empty())
+
+    // TODO fSettings["Tbc"] cannot read properly sometimes, it's a hidden trouble
+    // If happens, comment blow and set by yourself just as an example given blow
+    std::cout << "If this is the last outputted line, please refer to src/Tracking.cc:747 for trouble solving; Else, ignore this!" << std::endl;
+
+    cv::Mat Tbc;
+    node = fSettings["Tbc"];
+    if(!node.empty())
+    {
+        Tbc = node.mat();
+        if(Tbc.rows != 4 || Tbc.cols != 4)
         {
-            Tbc = node.mat();
-            if(Tbc.rows != 4 || Tbc.cols != 4)
-            {
-                std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
-                b_miss_params = true;
-            }
-        }
-        else
-        {
-            std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
+            std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
             b_miss_params = true;
         }
-    */
+    }
+    else
+    {
+        std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
+        b_miss_params = true;
+    }
 
-    cv::Mat Tbc = (cv::Mat_<float>(4,4) << \
+    /* Zed2 transform matrix from body-frame to camera left
+    Tbc = (cv::Mat_<float>(4,4) << \
            0.99997700, 0.006432690, -0.002351350, -0.00200000009499, \
           -0.00643046, 0.999979000,  0.000953118, -0.02300000377,    \
            0.00235743, -0.000937976, 0.999997000, -0.00200000009499, \
            0.0, 0.0, 0.0, 1.0);
+    */
+
 
     cout << "Left camera to Imu Transform (Tbc): " << endl << Tbc << endl;
 
@@ -1131,7 +1090,7 @@ void Tracking::GrabImuData(const IMU::Point &imuMeasurement)
 
 void Tracking::PreintegrateIMU()
 {
-    //cout << "start preintegration" << endl;
+    cout << "start preintegration" << endl;
     
     bool bOK = true;
 
@@ -1142,7 +1101,7 @@ void Tracking::PreintegrateIMU()
         bOK = false;
     }
 
-    // cout << "start loop. Total meas:" << mlQueueImuData.size() << endl;
+    cout << "start loop. Total meas:" << mlQueueImuData.size() << endl;
     
     if(bOK)
     {

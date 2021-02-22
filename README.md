@@ -5,7 +5,7 @@
 2. Add #include <unistd.h> to support Xavier
 3. modify build.sh for install convenience
 4. Fix some bugs according to PullRequest
-5. Add RGBD-Inertial-ROS by adopting from [xiefei2929/ORB_SLAM3-RGBD-Inertial](https://github.com/xiefei2929/ORB_SLAM3-RGBD-Inertial)
+5. Add RGBD-Inertial-ROS by adopting from [xiefei2929/ORB_SLAM3-RGBD-Inertial](https://github.com/xiefei2929/ORB_SLAM3-RGBD-Inertial), and some launch files for stereo and rgbd are given.
 
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
@@ -94,7 +94,7 @@ We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM
 cd ORB_SLAM3
 chmod +x build.sh
 # COMPILEWHICH can be 0(for All), 1(for Thirdparty Only), 2(for ORB_SLAM3 Only)
-./build.sh $(COMPILE_WHICH)
+./build.sh $(COMPILEWHICH)
 ```
 
 This will create **libORB_SLAM3.so**  at *lib* folder and the executables in *Examples* folder.
@@ -160,7 +160,52 @@ and add at the end the following line. Replace PATH by the folder where you clon
   chmod +x build_ros.sh
   ./build_ros.sh
   ```
-  
+
+
+ ### Running Launch File
+
+ #### RGBD/RGBD-Inertial
+
+ ```
+ #!/bin/bash
+
+ORB_SLAM3_HOME=/path/ORB_SLAM3
+export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:$ORB_SLAM3_HOME/Examples/ROS
+
+if [[ $1 == 'rgbd' ]]
+then
+    USE_IMU=false
+else
+    USE_IMU=true
+fi
+
+roslaunch ORB_SLAM3 rgbd.launch \
+    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.txt $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
+    imu:=$USE_IMU \
+
+ ```
+
+#### Stereo/Stereo-Inertial
+
+ ```
+ #!/bin/bash
+
+ORB_SLAM3_HOME=/path/ORB_SLAM3
+export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:$ORB_SLAM3_HOME/Examples/ROS
+
+if [[ $1 == 'stereo' ]]
+then
+    USE_IMU=false
+else
+    USE_IMU=true
+fi
+
+roslaunch ORB_SLAM3 stereo.launch \
+    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.txt $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
+    imu:=$USE_IMU \
+
+ ```
+
 ### Running Monocular Node
 For a monocular input from topic `/camera/image_raw` run node ORB_SLAM3/Mono. You will need to provide the vocabulary file and a settings file. See the monocular examples above.
 

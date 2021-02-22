@@ -78,6 +78,9 @@ int main(int argc, char **argv)
     nImages.resize(num_seq);
     nImu.resize(num_seq);
 
+    string pathVoc(argv[1]);
+    string pathSettings(argv[2]);
+
     int tot_images = 0;
     for (seq = 0; seq<num_seq; seq++)
     {
@@ -115,7 +118,7 @@ int main(int argc, char **argv)
     }
 
     // Read rectification parameters
-    cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
+    cv::FileStorage fsSettings(pathSettings, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
         cerr << "ERROR: Wrong path to settings" << endl;
@@ -160,7 +163,7 @@ int main(int argc, char **argv)
     cout.precision(17);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, true);
+    ORB_SLAM3::System SLAM(pathVoc, pathSettings,ORB_SLAM3::System::IMU_STEREO, true);
 
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
     for (seq = 0; seq<num_seq; seq++)
