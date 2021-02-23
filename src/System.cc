@@ -32,6 +32,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <unistd.h>
 
 namespace ORB_SLAM3
@@ -82,7 +83,17 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
     mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    bool bVocLoad;
+    if(boost::algorithm::ends_with(strVocFile, ".bin"))
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+    else if(boost::algorithm::ends_with(strVocFile, ".txt"))
+        bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    else
+    {
+        cerr << "Wrong path to vocabulary. " << endl;
+        cerr << "Failed to open at: " << strVocFile << endl;
+        exit(-1);
+    }
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;

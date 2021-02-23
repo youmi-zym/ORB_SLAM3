@@ -6,6 +6,7 @@
 3. modify build.sh for install convenience
 4. Fix some bugs according to PullRequest
 5. Add RGBD-Inertial-ROS by adopting from [xiefei2929/ORB_SLAM3-RGBD-Inertial](https://github.com/xiefei2929/ORB_SLAM3-RGBD-Inertial), and some launch files for stereo and rgbd are given.
+6. Modified the loading vocabulary in a faster binary way. Adopting from [xiefei2929/ORB_SLAM3-ROS-Interface](https://github.com/xiefei2929/ORB_SLAM3-ROS-Interface).
 
 **Authors:** Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
