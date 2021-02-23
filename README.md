@@ -181,7 +181,7 @@ else
 fi
 
 roslaunch ORB_SLAM3 rgbd.launch \
-    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.txt $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
+    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.bin $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
     imu:=$USE_IMU \
 
  ```
@@ -202,7 +202,7 @@ else
 fi
 
 roslaunch ORB_SLAM3 stereo.launch \
-    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.txt $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
+    args:="$ORB_SLAM3_HOME/Vocabulary/ORBvoc.bin $ORB_SLAM3_HOME/Examples/ROS/ORB_SLAM3/zed2.yaml false" \
     imu:=$USE_IMU \
 
  ```
@@ -248,7 +248,7 @@ For an RGB-D input from topics `/camera/rgb/image_raw` and `/camera/depth_regist
   ```
   
   ```
-  rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.txt Examples/Stereo-Inertial/EuRoC.yaml true
+  rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.bin Examples/Stereo-Inertial/EuRoC.yaml true
   ```
   
   ```

@@ -875,7 +875,6 @@ void Tracking::SetStepByStep(bool bSet)
 }
 
 
-
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
 {
     mImGray = imRectLeft;
@@ -1085,8 +1084,10 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 void Tracking::GrabImuData(const IMU::Point &imuMeasurement)
 {
     unique_lock<mutex> lock(mMutexImuQueue);
-    mlQueueImuData.push_back(imuMeasurement);
+    // mlQueueImuData.push_back(imuMeasurement);
+    mqImuData.push(imuMeasurement);
 }
+
 
 void Tracking::PreintegrateIMU()
 {
@@ -1101,49 +1102,46 @@ void Tracking::PreintegrateIMU()
         bOK = false;
     }
 
-    cout << "start loop. Total meas:" << mlQueueImuData.size() << endl;
-    
+    cout << "start loop. Total meas:" << mqImuData.size() << endl;
+    mvImuFromLastFrame.clear();
+
     if(bOK)
     {
+        unique_lock<mutex> lock(mMutexImuQueue);
         mvImuFromLastFrame.clear();
-        mvImuFromLastFrame.reserve(mlQueueImuData.size());
-        if(mlQueueImuData.size() == 0)
+        mvImuFromLastFrame.reserve(mqImuData.size());
+        if(mqImuData.size() == 0)
         {
-            Verbose::PrintMess("Not IMU data in mlQueueImuData!!", Verbose::VERBOSITY_NORMAL);
+            Verbose::PrintMess("Not IMU data in mqImuData!!", Verbose::VERBOSITY_NORMAL);
             mCurrentFrame.setIntegrated();
             bOK = false;
         }
 
-    }
-
-
-    while(bOK)
-    {
-        unique_lock<mutex> lock(mMutexImuQueue);
-        if(!mlQueueImuData.empty())
+        while(mqImuData.size() > 0)
         {
-            IMU::Point* m = &mlQueueImuData.front();
+            const IMU::Point& m = mqImuData.front();
             cout.precision(17);
-            if(m->t<mCurrentFrame.mpPrevFrame->mTimeStamp-0.001l)
+            if(m.t < mCurrentFrame.mpPrevFrame->mTimeStamp-0.001l)
             {
-                mlQueueImuData.pop_front();
+                mqImuData.pop();
             }
-            else if(m->t<mCurrentFrame.mTimeStamp-0.001l)
+            else if(m.t < mCurrentFrame.mTimeStamp-0.001l)
             {
-                mvImuFromLastFrame.push_back(*m);
-                mlQueueImuData.pop_front();
+                mvImuFromLastFrame.push_back(m);
+                mqImuData.pop();
             }
-            else // m->t > mCurrent.mTimeStamp-0.001l
+            // Even TimeStamp reach to next frame, borrow one more imu data to facilitate the subsequent preintegration convenience
+            else // m.t > mCurrent.mTimeStamp-0.001l;
             {
-                mvImuFromLastFrame.push_back(*m);
+                mvImuFromLastFrame.push_back(m);
                 break;
             }
         }
-
     }
 
-
-    const int n = mvImuFromLastFrame.size()-1;
+    if(!bOK)
+        mvImuFromLastFrame.clear();
+    const int n = mvImuFromLastFrame.size()-1; // due to one more next frame's imu data borrowed, the real effective imu data size should minus 1
     IMU::Preintegrated* pImuPreintegratedFromLastFrame = new IMU::Preintegrated(mLastFrame.mImuBias,mCurrentFrame.mImuCalib);
 
     for(int i=0; i<n; i++)
@@ -1166,7 +1164,7 @@ void Tracking::PreintegrateIMU()
             angVel = (mvImuFromLastFrame[i].w+mvImuFromLastFrame[i+1].w)*0.5f;
             tstep = mvImuFromLastFrame[i+1].t-mvImuFromLastFrame[i].t;
         }
-        else if((i>0) && (i==(n-1)))
+        else if((i>0) && (i==(n-1))) // next frame's one more imu data is used here
         {
             float tab = mvImuFromLastFrame[i+1].t-mvImuFromLastFrame[i].t;
             float tend = mvImuFromLastFrame[i+1].t-mCurrentFrame.mTimeStamp;
@@ -1297,6 +1295,7 @@ void Tracking::ComputeGyroBias(const vector<Frame*> &vpFs, float &bwx,  float &b
     }
 }
 
+
 void Tracking::ComputeVelocitiesAccBias(const vector<Frame*> &vpFs, float &bax,  float &bay, float &baz)
 {
     const int N = vpFs.size();
@@ -1353,9 +1352,10 @@ void Tracking::ComputeVelocitiesAccBias(const vector<Frame*> &vpFs, float &bax, 
     }
 }
 
+
 void Tracking::ResetFrameIMU()
 {
-    // TODO To implement...
+    // TODO To Be Implemented...
 }
 
 
@@ -1389,8 +1389,10 @@ void Tracking::Track()
         if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
+            // create a new map, clear IMU data in queue
             unique_lock<mutex> lock(mMutexImuQueue);
-            mlQueueImuData.clear();
+            while(mqImuData.size())
+                mqImuData.pop();
             CreateMapInAtlas();
             return;
         }
