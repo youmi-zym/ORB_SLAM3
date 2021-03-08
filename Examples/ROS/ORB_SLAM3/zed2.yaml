@@ -43,16 +43,16 @@ Tbc: !!opencv-matrix
    rows: 4
    cols: 4
    dt: f
-   data: [ 0.99997700, 0.006432690, -0.002351350, -0.00200000009499,
-          -0.00643046, 0.999979000,  0.000953118, -0.02300000377,
-           0.00235743, -0.000937976, 0.999997000, -0.00200000009499,
+   data: [ 0.99997700,  0.006432690, -0.002351350, -0.0020000000950,
+          -0.00643046,  0.999979000,  0.000953118, -0.0230000037700,
+           0.00235743, -0.000937976,  0.999997000, -0.0020000000950,
            0.0, 0.0, 0.0, 1.0]
 
 # IMU noise
-IMU.NoiseGyro: 1.7e-04 # 1.6968e-04 
-IMU.NoiseAcc: 2.0e-03 # 2.0000e-3
+IMU.NoiseGyro: 1.7e-04
+IMU.NoiseAcc: 2.0e-03
 IMU.GyroWalk: 1.9393e-05 
-IMU.AccWalk: 3.e-03 # 3.0000e-3
+IMU.AccWalk: 3.e-03
 IMU.Frequency: 400
 
 #--------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ ORBextractor.minThFAST: 7
 Viewer.KeyFrameSize: 0.05
 Viewer.KeyFrameLineWidth: 1
 Viewer.GraphLineWidth: 0.9
-Viewer.PointSize:2
+Viewer.PointSize: 2
 Viewer.CameraSize: 0.08
 Viewer.CameraLineWidth: 3
 Viewer.ViewpointX: 0

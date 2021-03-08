@@ -4873,10 +4873,18 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, bool
     }
 
     //cout << "Total map points: " << lLocalMapPoints.size() << endl;
+    bool bOK = true;
     for(map<int,int>::iterator mit=mVisEdges.begin(), mend=mVisEdges.end(); mit!=mend; mit++)
     {
-        assert(mit->second>=3);
+        // assert(mit->second>=3);
+        if(mit->second < 3)
+        {
+            std::cout << mit->second << " Bug here! No optimization!" << std::endl;
+            bOK=false;
+        }
     }
+    if(!bOK)
+        return;
 
     optimizer.initializeOptimization();
     optimizer.computeActiveErrors();

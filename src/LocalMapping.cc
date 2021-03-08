@@ -603,7 +603,8 @@ void LocalMapping::CreateNewMapPoints()
 
                 x3D = vt.row(3).t();
 
-                if(x3D.at<float>(3)==0)
+                // if(x3D.at<float>(3)==0)
+                if(fabs(x3D.at<float>(3)) < 1e-12)
                     continue;
 
                 // Euclidean coordinates
@@ -695,7 +696,8 @@ void LocalMapping::CreateNewMapPoints()
             cv::Mat normal2 = x3D-Ow2;
             float dist2 = cv::norm(normal2);
 
-            if(dist1==0 || dist2==0)
+            // if(dist1==0 || dist2==0)
+            if(fabs(dist1) < 1e-12 || fabs(dist2) < 1e-12)
                 continue;
 
             if(mbFarPoints && (dist1>=mThFarPoints||dist2>=mThFarPoints)) // MODIFICATION

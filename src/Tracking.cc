@@ -21,6 +21,7 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#include<opencv2/core/version.hpp>
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
@@ -743,39 +744,6 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
 {
     bool b_miss_params = false;
     cv::FileNode node;
-
-    // TODO fSettings["Tbc"] cannot read properly sometimes, it's a hidden trouble
-    // If happens, comment blow and set by yourself just as an example given blow
-    std::cout << "If this is the last outputted line, please refer to src/Tracking.cc:747 for trouble solving; Else, ignore this!" << std::endl;
-
-    cv::Mat Tbc;
-    node = fSettings["Tbc"];
-    if(!node.empty())
-    {
-        Tbc = node.mat();
-        if(Tbc.rows != 4 || Tbc.cols != 4)
-        {
-            std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
-            b_miss_params = true;
-        }
-    }
-    else
-    {
-        std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
-        b_miss_params = true;
-    }
-
-    /* Zed2 transform matrix from body-frame to camera left
-    Tbc = (cv::Mat_<float>(4,4) << \
-           0.99997700, 0.006432690, -0.002351350, -0.00200000009499, \
-          -0.00643046, 0.999979000,  0.000953118, -0.02300000377,    \
-           0.00235743, -0.000937976, 0.999997000, -0.00200000009499, \
-           0.0, 0.0, 0.0, 1.0);
-    */
-
-
-    cout << "Left camera to Imu Transform (Tbc): " << endl << Tbc << endl;
-
     float freq, Ng, Na, Ngw, Naw;
 
     node = fSettings["IMU.Frequency"];
@@ -833,11 +801,6 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
         b_miss_params = true;
     }
 
-    if(b_miss_params)
-    {
-        return false;
-    }
-
     const float sf = sqrt(freq);
     cout << endl;
     cout << "IMU frequency: " << freq << " Hz" << endl;
@@ -845,6 +808,43 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     cout << "IMU gyro walk: " << Ngw << " rad/s^2/sqrt(Hz)" << endl;
     cout << "IMU accelerometer noise: " << Na << " m/s^2/sqrt(Hz)" << endl;
     cout << "IMU accelerometer walk: " << Naw << " m/s^3/sqrt(Hz)" << endl;
+
+    cv::Mat Tbc;
+    node = fSettings["Tbc"];
+    if(!node.empty())
+    {
+        Tbc = node.mat();
+        if(Tbc.rows != 4 || Tbc.cols != 4)
+        {
+            std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
+            b_miss_params = true;
+        }
+    }
+    else
+    {
+        std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
+        b_miss_params = true;
+    }
+
+    /*
+    std::cout << "OpenCV Version: " << CV_VERSION << std::endl;
+    // TODO fSettings["Tbc"] cannot read properly sometimes, it's a hidden trouble
+    std::cout << "OpenCV Matrix reading error happens at src/Tracking.cc:756, Tbc will be set as Zed2 case" << std::endl;
+
+    // Zed2 transform matrix from body-frame to camera left
+    Tbc = (cv::Mat_<float>(4,4) << \
+           0.99997700, 0.006432690, -0.002351350, -0.00200000009499, \
+          -0.00643046, 0.999979000,  0.000953118, -0.02300000377,    \
+           0.00235743, -0.000937976, 0.999997000, -0.00200000009499, \
+           0.0, 0.0, 0.0, 1.0);
+    */
+
+    cout << "IMU Left camera to Imu Transform (Tbc): " << endl << Tbc << endl;
+
+    if(b_miss_params)
+    {
+        return false;
+    }
 
     mpImuCalib = new IMU::Calib(Tbc,Ng*sf,Na*sf,Ngw/sf,Naw/sf);
 
