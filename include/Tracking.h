@@ -194,7 +194,6 @@ protected:
     void UpdateLocalKeyFrames();
 
     bool TrackLocalMap();
-    bool TrackLocalMap_old();
     void SearchLocalPoints();
 
     bool NeedNewKeyFrame();

@@ -1154,6 +1154,9 @@ int Optimizer::PoseOptimization(Frame *pFrame)
 
         if(optimizer.edges().size()<10)
             break;
+
+        if(nInitialCorrespondences - nBad < 10)
+            break;
     }    
 
     // Recover optimized pose and return number of inliers
