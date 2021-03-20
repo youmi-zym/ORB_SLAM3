@@ -81,6 +81,8 @@ public:
 
     std::mutex mMutexImuInit;
 
+    // mRwg is the gravity direction, represented with two angles, in world reference is g = Rwg * gI, with gI = (0, 0, G)
+    // mba, mbg are the accelerometer and gyroscope biases assumed to be constant during initialization
     Eigen::MatrixXd mcovInertial;
     Eigen::Matrix3d mRwg;
     Eigen::Vector3d mbg;
@@ -125,7 +127,9 @@ protected:
 
     System *mpSystem;
 
+    // whether monocular
     bool mbMonocular;
+    // whether use IMU
     bool mbInertial;
 
     void ResetIfRequested();
@@ -172,6 +176,7 @@ protected:
     int mNumLM;
     int mNumKFCulling;
 
+    // record time from last initilization
     float mTinit;
 
     int countRefinement;

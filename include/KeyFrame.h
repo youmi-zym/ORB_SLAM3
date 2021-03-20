@@ -351,7 +351,7 @@ public:
     void SetNotErase();
     void SetErase();
 
-    // Set/check bad flag
+    // Set/check bad flag, i.e., whether delete current KeyFrame
     void SetBadFlag();
     bool isBad();
 
@@ -384,6 +384,7 @@ public:
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
 
+    // whether current KeyFrame's IMU initialized
     bool bImu;
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).

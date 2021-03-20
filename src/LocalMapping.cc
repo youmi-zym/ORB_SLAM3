@@ -95,7 +95,7 @@ void LocalMapping::Run()
 
             // Save here:
             // # Cov KFs
-            // # tot Kfs
+            // # tot KFs
             // # recent added MPs
             // # tot MPs
             // # localMPs in LBA
@@ -132,10 +132,13 @@ void LocalMapping::Run()
                         float dist = cv::norm(mpCurrentKeyFrame->mPrevKF->GetCameraCenter() - mpCurrentKeyFrame->GetCameraCenter()) +
                                 cv::norm(mpCurrentKeyFrame->mPrevKF->mPrevKF->GetCameraCenter() - mpCurrentKeyFrame->mPrevKF->GetCameraCenter());
 
+                        // the distance between contiguous two frames is too large
                         if(dist>0.05)
                             mTinit += mpCurrentKeyFrame->mTimeStamp - mpCurrentKeyFrame->mPrevKF->mTimeStamp;
+                        // if InertialBA2 isn't running, i.e., finished
                         if(!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                         {
+                            // have initialized for 10s but the motion is still less than 0.02m, imu is bad, reset map
                             if((mTinit<10.f) && (dist<0.02))
                             {
                                 cout << "Not enough motion for initializing. Reseting..." << endl;
@@ -146,6 +149,7 @@ void LocalMapping::Run()
                             }
                         }
 
+                        // whether too much MapPoints have to be optimized
                         bool bLarge = ((mpTracker->GetMatchesInliers()>75)&&mbMonocular)||((mpTracker->GetMatchesInliers()>100)&&!mbMonocular);
                         Optimizer::LocalInertialBA(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(), bLarge, !mpCurrentKeyFrame->GetMap()->GetIniertialBA2());
                     }
@@ -159,13 +163,13 @@ void LocalMapping::Run()
 
                 t5 = std::chrono::steady_clock::now();
 
-                // Initialize IMU here
+                // Initialize IMU here, optimizer trends to use the fastest gradient desent
                 if(!mpCurrentKeyFrame->GetMap()->isImuInitialized() && mbInertial)
                 {
                     if (mbMonocular)
-                        InitializeIMU(1e2, 1e10, true);
+                        InitializeIMU(1e2, 1e10, true); // priorG, priorA, FullInertialBA
                     else
-                        InitializeIMU(1e2, 1e5, true);
+                        InitializeIMU(1e2, 1e5, true); // priorG, priorA, FullInertialBA
                 }
 
 
@@ -290,9 +294,16 @@ bool LocalMapping::CheckNewKeyFrames()
     return(!mlNewKeyFrames.empty());
 }
 
+/**
+ * 1. Compute the Current KeyFrame's BoW
+ * 2. For each MapPoint in KeyFrame:
+ *      - Add observation by Current KeyFrame
+ *      - Update Normal and Depth
+ *      - compute descriptors
+ * 3. For Current KeyFrame, update covisibility graph
+ */
 void LocalMapping::ProcessNewKeyFrame()
 {
-    //cout << "ProcessNewKeyFrame: " << mlNewKeyFrames.size() << endl;
     {
         unique_lock<mutex> lock(mMutexNewKFs);
         mpCurrentKeyFrame = mlNewKeyFrames.front();
@@ -333,12 +344,21 @@ void LocalMapping::ProcessNewKeyFrame()
     mpAtlas->AddKeyFrame(mpCurrentKeyFrame);
 }
 
+/**
+ * Process all new added KeyFrame
+ */
 void LocalMapping::EmptyQueue()
 {
     while(CheckNewKeyFrames())
         ProcessNewKeyFrame();
 }
 
+/**
+ * RecentAddedMapPoints contains the MapPoints created by:
+ *     - CreateNewMapPoints()
+ *     - ProcessNewKeyFrame()
+ * Check and cull the bad MapPoints
+ */
 void LocalMapping::MapPointCulling()
 {
     // Check Recent Added MapPoints
@@ -352,35 +372,36 @@ void LocalMapping::MapPointCulling()
         nThObs = 3; // MODIFICATION_STEREO_IMU here 3
     const int cnThObs = nThObs;
 
-    int borrar = mlpRecentAddedMapPoints.size();
-
     while(lit!=mlpRecentAddedMapPoints.end())
     {
         MapPoint* pMP = *lit;
 
-        if(pMP->isBad())
+        if(pMP->isBad()) // bad point, has erased
             lit = mlpRecentAddedMapPoints.erase(lit);
-        else if(pMP->GetFoundRatio()<0.25f)
+        else if(pMP->GetFoundRatio()<0.25f)  // bad point, erase
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
         }
-        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=2 && pMP->Observations()<=cnThObs)
+        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=2 && pMP->Observations()<=cnThObs)   // bad point, erase
         {
             pMP->SetBadFlag();
             lit = mlpRecentAddedMapPoints.erase(lit);
         }
-        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=3)
+        else if(((int)nCurrentKFid-(int)pMP->mnFirstKFid)>=3)   // good point, not erase, remove from culling list
             lit = mlpRecentAddedMapPoints.erase(lit);
         else
         {
             lit++;
-            borrar--;
         }
     }
-    //cout << "erase MP: " << borrar << endl;
 }
 
+/**
+ * Create new MapPoints by matching between Current KeyFrame and its top-n best covisibility KeyRames
+ * Which make the after tracking more robust
+ * Search matches with epipolar restriction and triangulate
+ */
 void LocalMapping::CreateNewMapPoints()
 {
     // Retrieve neighbor keyframes in covisibility graph
@@ -390,6 +411,7 @@ void LocalMapping::CreateNewMapPoints()
         nn=20;
     vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
 
+    // Add previous KeyFrame until the size of vpNeighKFs comes to nn
     if (mbInertial)
     {
         KeyFrame* pKF = mpCurrentKeyFrame;
@@ -427,6 +449,7 @@ void LocalMapping::CreateNewMapPoints()
     // Search matches with epipolar restriction and triangulate
     for(size_t i=0; i<vpNeighKFs.size(); i++)
     {
+        // if new KeyFrame need to process, stop create new MapPoints
         if(i>0 && CheckNewKeyFrames())// && (mnMatchesInliers>50))
             return;
 
@@ -728,7 +751,10 @@ void LocalMapping::CreateNewMapPoints()
     }
 }
 
-
+/**
+ * Find more matches between current and neighbor KeyFrames
+ * And fuse duplicated MapPoints
+ */
 void LocalMapping::SearchInNeighbors()
 {
     // Retrieve neighbor keyframes
@@ -941,7 +967,6 @@ void LocalMapping::KeyFrameCulling()
     // A keyframe is considered redundant if the 90% of the MapPoints it sees, are seen
     // in at least other 3 keyframes (in the same or finer scale)
     // We only consider close stereo points
-    const int Nd = 21; // MODIFICATION_STEREO_IMU 20 This should be the same than that one from LIBA
     mpCurrentKeyFrame->UpdateBestCovisibles();
     vector<KeyFrame*> vpLocalKeyFrames = mpCurrentKeyFrame->GetVectorCovisibleKeyFrames();
 
@@ -956,11 +981,11 @@ void LocalMapping::KeyFrameCulling()
     const bool bInitImu = mpAtlas->isImuInitialized();
     int count=0;
 
-    // Compoute last KF from optimizable window:
+    const int Nd = 21; // MODIFICATION_STEREO_IMU 20 This should be the same than that one from LIBA
+    // get the earlist KF in optimizable window:
     unsigned int last_ID;
     if (mbInertial)
     {
-        int count = 0;
         KeyFrame* aux_KF = mpCurrentKeyFrame;
         while(count<Nd && aux_KF->mPrevKF)
         {
@@ -970,8 +995,7 @@ void LocalMapping::KeyFrameCulling()
         last_ID = aux_KF->mnId;
     }
 
-
-
+    count = 0;
     for(vector<KeyFrame*>::iterator vit=vpLocalKeyFrames.begin(), vend=vpLocalKeyFrames.end(); vit!=vend; vit++)
     {
         count++;
@@ -981,10 +1005,9 @@ void LocalMapping::KeyFrameCulling()
             continue;
         const vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
 
-        int nObs = 3;
-        const int thObs=nObs;
+        const int thObs=3;
         int nRedundantObservations=0;
-        int nMPs=0;
+        int nMPs=0; // the number of effective MapPoints in current KeyFrame
         for(size_t i=0, iend=vpMapPoints.size(); i<iend; i++)
         {
             MapPoint* pMP = vpMapPoints[i];
@@ -1047,16 +1070,18 @@ void LocalMapping::KeyFrameCulling()
         {
             if (mbInertial)
             {
-                if (mpAtlas->KeyFramesInMap()<=Nd)
+                if (mpAtlas->KeyFramesInMap()<=Nd) // the number of KeyFrames is too small
                     continue;
 
-                if(pKF->mnId>(mpCurrentKeyFrame->mnId-2))
+                if(pKF->mnId>(mpCurrentKeyFrame->mnId-2)) // near Current KeyFrame
                     continue;
 
+                // merge current KeyFrame to Next KeyFrame
                 if(pKF->mPrevKF && pKF->mNextKF)
                 {
                     const float t = pKF->mNextKF->mTimeStamp-pKF->mPrevKF->mTimeStamp;
 
+                    // IMU initialized and pKF is outside current KeyFrame's IMU Optimization Window
                     if((bInitImu && (pKF->mnId<last_ID) && t<3.) || (t<0.5))
                     {
                         pKF->mNextKF->mpImuPreintegrated->MergePrevious(pKF->mpImuPreintegrated);
@@ -1213,12 +1238,21 @@ bool LocalMapping::isFinished()
     return mbFinished;
 }
 
+/**
+ * Initialize IMU velocities, gravity direction and bias if enough KeyFrames got after system setup
+ * Refer to Sec V.B IMU Initialization
+ * @param priorG
+ * @param priorA
+ * @param bFIBA: if full inertial bundle adjustment
+ */
 void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 {
     if (mbResetRequested)
         return;
 
+    // minimum time to initialize IMU after relocalization
     float minTime;
+    // minimum number of KeyFrames to initialize IMU after relocalization
     int nMinKF;
     if (mbMonocular)
     {
@@ -1265,9 +1299,11 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     const int N = vpKF.size();
     IMU::Bias b(0,0,0,0,0,0);
 
-    // Compute and KF velocities mRwg estimation
+    // Compute KF velocities and mRwg estimation
     if (!mpCurrentKeyFrame->GetMap()->isImuInitialized())
     {
+        // mRwg is the gravity direction, represented with two angles, in world reference is g = Rwg * gI, with gI = (0, 0, G)
+        // mba, mbg are the accelerometer and gyroscope biases assumed to be constant during initialization
         cv::Mat cvRwg;
         cv::Mat dirG = cv::Mat::zeros(3,1,CV_32F);
         for(vector<KeyFrame*>::iterator itKF = vpKF.begin(); itKF!=vpKF.end(); itKF++)
@@ -1277,6 +1313,8 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
             if (!(*itKF)->mPrevKF)
                 continue;
 
+            // acceleration vector at each KeyFrame is accumulated
+            // which correponds to the final acceleration vector during this period
             dirG -= (*itKF)->mPrevKF->GetImuRotation()*(*itKF)->mpImuPreintegrated->GetUpdatedDeltaVelocity();
             cv::Mat _vel = ((*itKF)->GetImuPosition() - (*itKF)->mPrevKF->GetImuPosition())/(*itKF)->mpImuPreintegrated->dT;
             (*itKF)->SetVelocity(_vel);
@@ -1285,17 +1323,23 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
         dirG = dirG/cv::norm(dirG);
         cv::Mat gI = (cv::Mat_<float>(3,1) << 0.0f, 0.0f, -1.0f);
+        // getting the axis of axis-angle representation
+        // the axis is the cross product between default G and the acceleration vector
         cv::Mat v = gI.cross(dirG);
         const float nv = cv::norm(v);
+        // angle between motion and gravity direction
         const float cosg = gI.dot(dirG);
         const float ang = acos(cosg);
+        // axis-angle, rotation matrix, direction is the axis, length is the angle
         cv::Mat vzg = v*ang/nv;
         cvRwg = IMU::ExpSO3(vzg);
         mRwg = Converter::toMatrix3d(cvRwg);
+        // mTinit record the time from initialization
         mTinit = mpCurrentKeyFrame->mTimeStamp-mFirstTs;
     }
     else
     {
+        // if IMU initialized, the direction of gravity is right, i.e., identity matrix
         mRwg = Eigen::Matrix3d::Identity();
         mbg = Converter::toVector3d(mpCurrentKeyFrame->GetGyroBias());
         mba = Converter::toVector3d(mpCurrentKeyFrame->GetAccBias());
@@ -1303,6 +1347,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     mScale=1.0;
 
+    // mInitTime record the time from initialization to LastFrame in Tracking
     mInitTime = mpTracker->mLastFrame.mTimeStamp-vpKF.front()->mTimeStamp;
 
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
@@ -1327,6 +1372,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // once the scale of the map change largely, we have to update the pose of CurrentFrame in tracking
     if ((fabs(mScale-1.f)>0.00001)||!mbMonocular)
     {
         mpAtlas->GetCurrentMap()->ApplyScaledRotation(Converter::toCvMat(mRwg).t(),mScale,true);
@@ -1347,6 +1393,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     cout << "bg: " << mpCurrentKeyFrame->GetGyroBias() << endl;*/
 
     std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
+    // after InertialBA, whether need a FullInertialBA
     if (bFIBA)
     {
         if (priorA!=0.f)
@@ -1357,13 +1404,14 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
 
-    // If initialization is OK
+    // only update Last Frame and Current Frame's Pose, mLastBias
     mpTracker->UpdateFrameIMU(1.0,vpKF[0]->GetImuBias(),mpCurrentKeyFrame);
     if (!mpAtlas->isImuInitialized())
     {
         cout << "IMU in Map " << mpAtlas->GetCurrentMap()->GetId() << " is initialized" << endl;
         mpAtlas->SetImuInitialized();
         mpTracker->t0IMU = mpTracker->mCurrentFrame.mTimeStamp;
+        // CurrentKeyFrame's IMU parameter is initialized
         mpCurrentKeyFrame->bImu = true;
     }
 
@@ -1372,6 +1420,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     mnKFs=vpKF.size();
     mIdxInit++;
 
+    //TODO delete KeyFrame used for IMU initialization
     for(list<KeyFrame*>::iterator lit = mlNewKeyFrames.begin(), lend=mlNewKeyFrames.end(); lit!=lend; lit++)
     {
         (*lit)->SetBadFlag();

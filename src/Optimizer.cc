@@ -454,6 +454,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
         bool bFixed = false;
         if(bFixLocal)
         {
+            // for LocalBA, the KeyFrame outside the Current Map is set as fixed
             bFixed = (pKFi->mnBALocalForKF>=(maxKFid-1)) || (pKFi->mnBAFixedForKF>=(maxKFid-1));
             if(!bFixed)
                 nNonFixed++;
@@ -1802,9 +1803,9 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     if(num_fixedKF == 0)
     {
         Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
-        //return;
+        // return;
     }
-    //Verbose::PrintMess("LM-LBA: There are " + to_string(lLocalKeyFrames.size()) + " KFs and " + to_string(lLocalMapPoints.size()) + " MPs to optimize. " + to_string(num_fixedKF) + " KFs are fixed", Verbose::VERBOSITY_DEBUG);
+    // Verbose::PrintMess("LM-LBA: There are " + to_string(lLocalKeyFrames.size()) + " KFs and " + to_string(lLocalMapPoints.size()) + " MPs to optimize. " + to_string(num_fixedKF) + " KFs are fixed", Verbose::VERBOSITY_DEBUG);
 
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
@@ -2049,11 +2050,11 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
             if(e->chi2()>5.991 || !e->isDepthPositive())
             {
-                // e->setLevel(1); // MODIFICATION
+                //TODO e->setLevel(1); // no optimization
                 nMonoBadObs++;
             }
 
-            //e->setRobustKernel(0);
+            //TODO e->setRobustKernel(0); // no robust kernel
         }
 
         int nBodyBadObs = 0;
@@ -2067,11 +2068,11 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
             if(e->chi2()>5.991 || !e->isDepthPositive())
             {
-                //e->setLevel(1);
+                //TODO e->setLevel(1); // no optimization
                 nBodyBadObs++;
             }
 
-            //e->setRobustKernel(0);
+            //TODO e->setRobustKernel(0);  // no robust kernel
         }
 
         int nStereoBadObs = 0;
@@ -2085,11 +2086,11 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
 
             if(e->chi2()>7.815 || !e->isDepthPositive())
             {
-                //TODO e->setLevel(1);
+                //TODO e->setLevel(1); // no optimization
                 nStereoBadObs++;
             }
 
-            //TODO e->setRobustKernel(0);
+            //TODO e->setRobustKernel(0); // no robust kernel
         }
         //Verbose::PrintMess("LM-LBA: First optimization has " + to_string(nMonoBadObs) + " monocular and " + to_string(nStereoBadObs) + " stereo bad observations", Verbose::VERBOSITY_DEBUG);
 
@@ -2103,7 +2104,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     vector<pair<KeyFrame*,MapPoint*> > vToErase;
     vToErase.reserve(vpEdgesMono.size()+vpEdgesBody.size()+vpEdgesStereo.size());
 
-    // Check inlier observations       
+    // get outliers
     for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
     {
         ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
@@ -2167,6 +2168,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     // Get Map Mutex
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
+    // remove outliers
     if(!vToErase.empty())
     {
         map<KeyFrame*, int> mspInitialConnectedKFs;
@@ -5153,7 +5155,8 @@ Eigen::MatrixXd Optimizer::Sparsify(const Eigen::MatrixXd &H, const int &start1,
 void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale, Eigen::Vector3d &bg, Eigen::Vector3d &ba, bool bMono, Eigen::MatrixXd  &covInertial, bool bFixedVel, bool bGauss, float priorG, float priorA)
 {
     Verbose::PrintMess("inertial optimization", Verbose::VERBOSITY_NORMAL);
-    int its = 200; // Check number of iterations
+    //TODO Check number of iterations
+    int its = 200;
     long unsigned int maxKFid = pMap->GetMaxKFid();
     const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 
