@@ -255,6 +255,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     mb = mbf/fx;
 
+    /**
     if(pPrevF)
     {
         if(!pPrevF->mVw.empty())
@@ -264,6 +265,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     {
         mVw = cv::Mat::zeros(3,1,CV_32F);
     }
+    */
 
     AssignFeaturesToGrid();
 

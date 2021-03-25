@@ -132,7 +132,7 @@ void LocalMapping::Run()
                         float dist = cv::norm(mpCurrentKeyFrame->mPrevKF->GetCameraCenter() - mpCurrentKeyFrame->GetCameraCenter()) +
                                 cv::norm(mpCurrentKeyFrame->mPrevKF->mPrevKF->GetCameraCenter() - mpCurrentKeyFrame->mPrevKF->GetCameraCenter());
 
-                        // the distance between contiguous two frames is too large
+                        // the motion between contiguous two frames is enough
                         if(dist>0.05)
                             mTinit += mpCurrentKeyFrame->mTimeStamp - mpCurrentKeyFrame->mPrevKF->mTimeStamp;
                         // if InertialBA2 isn't running, i.e., finished

@@ -576,7 +576,7 @@ bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
         std::cerr << "Check an example configuration file with the desired sensor" << std::endl;
     }
 
-    if(mSensor==System::STEREO || mSensor==System::IMU_STEREO)
+    if(mSensor==System::STEREO || mSensor==System::IMU_STEREO || mSensor == System::RGBD || mSensor == System::IMU_RGBD)
     {
         cv::FileNode node = fSettings["Camera.bf"];
         if(!node.empty() && node.isReal())
@@ -810,6 +810,7 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
     cout << "IMU accelerometer walk: " << Naw << " m/s^3/sqrt(Hz)" << endl;
 
     cv::Mat Tbc;
+    /*
     node = fSettings["Tbc"];
     if(!node.empty())
     {
@@ -825,8 +826,8 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
         std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
         b_miss_params = true;
     }
+    */
 
-    /*
     std::cout << "OpenCV Version: " << CV_VERSION << std::endl;
     // TODO fSettings["Tbc"] cannot read properly sometimes, it's a hidden trouble
     std::cout << "OpenCV Matrix reading error happens at src/Tracking.cc:756, Tbc will be set as Zed2 case" << std::endl;
@@ -837,7 +838,6 @@ bool Tracking::ParseIMUParamFile(cv::FileStorage &fSettings)
           -0.00643046, 0.999979000,  0.000953118, -0.02300000377,    \
            0.00235743, -0.000937976, 0.999997000, -0.00200000009499, \
            0.0, 0.0, 0.0, 1.0);
-    */
 
     cout << "IMU Left camera to Imu Transform (Tbc): " << endl << Tbc << endl;
 
@@ -1101,11 +1101,12 @@ void Tracking::PreintegrateIMU()
         bOK = false;
     }
 
-    cout << "start loop. Total meas:" << mqImuData.size() << endl;
+    cout << "Before IMU Preintegration, Total meas:" << mqImuData.size() << endl;
     mvImuFromLastFrame.clear();
 
     if(bOK)
     {
+        cout << "Start IMU Preintegration... " << endl;
         unique_lock<mutex> lock(mMutexImuQueue);
         mvImuFromLastFrame.clear();
         mvImuFromLastFrame.reserve(mqImuData.size());
@@ -1356,6 +1357,7 @@ void Tracking::ResetFrameIMU()
 {
     // TODO To Be Implemented...
     mpImuPreintegratedFromLastKF = new IMU::Preintegrated(IMU::Bias(),*mpImuCalib);
+    mCurrentFrame.mpImuPreintegrated = mpImuPreintegratedFromLastKF;
 }
 
 
@@ -1563,7 +1565,7 @@ void Tracking::Track()
                         // IMU has obtained good initial values for the inertial variables
                         // predict current frame's pose by IMU
                         if(pCurrentMap->isImuInitialized())
-                            PredictStateIMU();
+                            bOK = PredictStateIMU();
                         else
                             bOK = false;
 
@@ -1745,6 +1747,7 @@ void Tracking::Track()
             }
         }
 
+        /**
         // Save frame if recent relocalization, since they are used for IMU reset (as we are making copy, it shluld be once mCurrFrame is completely modified)
         // MaxFrames = FramesToResetIMU = fps
         if(( mCurrentFrame.mnId<(mnLastRelocFrameId+mnFramesToResetIMU))
@@ -1774,6 +1777,7 @@ void Tracking::Track()
                     mLastBias = mCurrentFrame.mImuBias;
             }
         }
+        */
 
         // Update drawer
         mpFrameDrawer->Update(this);

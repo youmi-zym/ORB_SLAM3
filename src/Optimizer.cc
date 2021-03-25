@@ -6384,6 +6384,20 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
 
     //cout << "End to load MPs" << endl;
 
+    // Make sure we have vertices to optimize
+    bool allVerticesMarginalized = true;
+    for(size_t i = 0; i < optimizer.indexMapping().size(); ++i)
+    {
+        g2o::OptimizableGraph::Vertex* v = optimizer.indexMapping()[i];
+        if(!v->marginalized())
+        {
+            allVerticesMarginalized = false;
+            break;
+        }
+    }
+    if(allVerticesMarginalized)
+        return;
+
     if(pbStopFlag)
         if(*pbStopFlag)
             return;
